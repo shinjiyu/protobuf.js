@@ -187,96 +187,115 @@ exports.main = function main(args, callback) {
     if (!target)
         target = require(path.resolve(process.cwd(), argv[inputArgs.TARGET]));
 
-    var root = new protobuf.Root();
+    var _count = 0;
 
-    var mainFiles = [];
-
-    // Search include paths when resolving imports
-    root.resolvePath = function pbjsResolvePath(origin, target) {
-        var normOrigin = protobuf.util.path.normalize(origin),
-            normTarget = protobuf.util.path.normalize(target);
-        if (!normOrigin)
-            mainFiles.push(normTarget);
-
-        var resolved = protobuf.util.path.resolve(normOrigin, normTarget, true);
-        var idx = resolved.lastIndexOf("google/protobuf/");
-        if (idx > -1) {
-            var altname = resolved.substring(idx);
-            if (altname in protobuf.common)
-                resolved = altname;
+    for(var _file of files)
+    {
+        if(_count == 1)
+        {
+         //   break;
         }
+        _count++;
 
-        if (fs.existsSync(resolved))
+
+        //_file 是一个路径,获得_file的文件名
+        var _file_name = _file.split("\\").pop().split('.')[0];
+        var mainFiles = [_file_name];
+        argv[inputArgs.OUT] = `output/PB/${_file_name}.js`;
+        
+        //argv[inputArgs.OUT] = 
+
+
+        
+        var root = new protobuf.Root();
+
+        // Search include paths when resolving imports
+        root.resolvePath = function pbjsResolvePath(origin, target) {
+            var normOrigin = protobuf.util.path.normalize(origin),
+                normTarget = protobuf.util.path.normalize(target);
+    
+            var resolved = protobuf.util.path.resolve(normOrigin, normTarget, true);
+            var idx = resolved.lastIndexOf("google/protobuf/");
+            if (idx > -1) {
+                var altname = resolved.substring(idx);
+                if (altname in protobuf.common)
+                    resolved = altname;
+            }
+    
+            if (fs.existsSync(resolved))
+                return resolved;
+    
+            for (var i = 0; i < paths.length; ++i) {
+                var iresolved = protobuf.util.path.resolve(paths[i] + "/", target);
+                if (fs.existsSync(iresolved))
+                    return iresolved;
+            }
+    
             return resolved;
-
-        for (var i = 0; i < paths.length; ++i) {
-            var iresolved = protobuf.util.path.resolve(paths[i] + "/", target);
-            if (fs.existsSync(iresolved))
-                return iresolved;
+        };
+    
+        // `--wrap es6` implies `--es6` but not the other way around. You can still use e.g. `--es6 --wrap commonjs`
+        if (argv[inputArgs.WRAP] === "es6") {
+            argv[inputArgs.ES6] = true;
         }
-
-        return resolved;
-    };
-
-    // `--wrap es6` implies `--es6` but not the other way around. You can still use e.g. `--es6 --wrap commonjs`
-    if (argv[inputArgs.WRAP] === "es6") {
-        argv[inputArgs.ES6] = true;
-    }
-
-    var parseOptions = {
-        "keepCase": argv[inputArgs.KEEP_CASE] || false,
-        "alternateCommentMode": argv[inputArgs.ALT_COMMENT] || false,
-    };
-
-    // Read from stdin
-    if (files.length === 1 && files[0] === "-") {
-        var data = [];
-        process.stdin.on("data", function(chunk) {
-            data.push(chunk);
-        });
-        process.stdin.on("end", function() {
-            var source = Buffer.concat(data).toString("utf8");
+    
+        var parseOptions = {
+            "keepCase": argv[inputArgs.KEEP_CASE] || false,
+            "alternateCommentMode": argv[inputArgs.ALT_COMMENT] || false,
+        };
+    
+        // Read from stdin
+        if (files.length === 1 && files[0] === "-") {
+            var data = [];
+            process.stdin.on("data", function(chunk) {
+                data.push(chunk);
+            });
+            process.stdin.on("end", function() {
+                var source = Buffer.concat(data).toString("utf8");
+                try {
+                    if (source.charAt(0) !== "{") {
+                        protobuf.parse.filename = "-";
+                        protobuf.parse(source, root, parseOptions);
+                    } else {
+                        var json = JSON.parse(source);
+                        root.setOptions(json.options).addJSON(json);
+                    }
+                    callTarget();
+                } catch (err) {
+                    if (callback) {
+                        callback(err);
+                        return;
+                    }
+                    throw err;
+                }
+            });
+    
+        // Load from disk
+        } else {
             try {
-                if (source.charAt(0) !== "{") {
-                    protobuf.parse.filename = "-";
-                    protobuf.parse(source, root, parseOptions);
-                } else {
-                    var json = JSON.parse(source);
-                    root.setOptions(json.options).addJSON(json);
+                root.loadSync([_file], parseOptions).resolveAll(); // sync is deterministic while async is not
+                if (argv[inputArgs.SPARSE]) {
+                    sparsify(root);
+                }
+                if (argv[inputArgs.USE_IMPORTS]) {
+                    markUndefinedInMainFile(root);
+                    printImports(root, [_file], paths);
+                }
+                if (argv[inputArgs.UNIFY_NAMES]) {
+                    unifyNames(root);
                 }
                 callTarget();
             } catch (err) {
                 if (callback) {
                     callback(err);
-                    return;
+                    return undefined;
                 }
                 throw err;
             }
-        });
-
-    // Load from disk
-    } else {
-        try {
-            root.loadSync(files, parseOptions).resolveAll(); // sync is deterministic while async is not
-            if (argv[inputArgs.SPARSE]) {
-                sparsify(root);
-            }
-            if (argv[inputArgs.USE_IMPORTS]) {
-                markUndefinedInMainFile(root);
-                printImports(root, files, paths);
-            }
-            if (argv[inputArgs.UNIFY_NAMES]) {
-                unifyNames(root);
-            }
-            callTarget();
-        } catch (err) {
-            if (callback) {
-                callback(err);
-                return undefined;
-            }
-            throw err;
         }
     }
+
+
 
     function printImports(root, files, paths) {
         const imports = new Set();
@@ -284,7 +303,11 @@ exports.main = function main(args, callback) {
             return;
         }
         files.forEach(function(file) {
-
+            if(file == undefined)
+            {
+                return;
+            }
+            
             const importsInFile = findAllImports(findProtobufFile(file, paths));
             importsInFile.forEach(function(item) {
                 if (item.endsWith('.proto')) {
@@ -308,7 +331,7 @@ exports.main = function main(args, callback) {
     }
 
     function findAllImports(file) {
-        const fileContent = fs.readFileSync(file, 'utf-8');
+        const fileContent = (file  == undefined )? "":fs.readFileSync(file, 'utf-8');
 
         const result = [];
         const re = /\nimport "(.*?)";/g;
@@ -382,10 +405,16 @@ exports.main = function main(args, callback) {
             fixFilename(obj);
 
             obj.undefinedInMainProto = false;
+
             if (!obj.filename)
+            {
                 return;
-            if (contains(mainFiles, obj.filename))
+            }
+            if (contains(mainFiles,obj.filename.replaceAll("/","\\").split("\\").pop().split('.')[0]))
+            {
                 return;
+            }
+
             obj.undefinedInMainProto = true;
             let protoFrom = obj.filename;
             if (protoFrom.endsWith('.proto')) {

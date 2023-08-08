@@ -118,12 +118,27 @@ function aOrAn(name) {
 }
 
 function buildNamespace(ref, ns) {
+
     if (!ns)
         return;
 
     if (ns instanceof Service && !config.service)
         return;
 
+    if(ns instanceof Namespace)
+    {
+        if(`${ns}`.includes('Namespace'))
+        {
+            var undefinedInMainProto = true;
+            ns.nestedArray.forEach(function(nested) {
+                undefinedInMainProto = undefinedInMainProto && nested.undefinedInMainProto;
+            });
+            if(undefinedInMainProto)
+            {
+                return;
+            }
+        }
+    }
 
     if(ns.undefinedInMainProto)
         return;
@@ -360,7 +375,7 @@ function toJsType(field) {
         case "sint64":
         case "fixed64":
         case "sfixed64":
-            type = config.forceLong ? "Long" : config.forceNumber ? "number" : "number|Long";
+            type = "Long"
             break;
         case "bool":
             type = "boolean";
@@ -399,7 +414,17 @@ function buildType(ref, type) {
             "@interface " + escapeName("I" + type.name)
         ];
         type.fieldsArray.forEach(function(field) {
-            var prop = util.safeProp(field.name); // either .name or ["name"]
+            
+           //[hgame_modify_function buildType]
+           // var fieldNameOri = field.name;
+            field.name = field.name.split('_') // 根据下划线分割字符串
+                .map(word => word.charAt(0).toUpperCase() + word.slice(1)) // 将每个单词的首字母转换为大写
+                .join('');
+            // if (fieldNameOri != field.name) {
+            //     console.log(`字段 ${fieldNameOri} 转换为大驼峰: ${field.name}`)
+            // }
+
+           var prop = util.safeProp(field.name); // either .name or ["name"]
             prop = prop.substring(1, prop.charAt(0) === "[" ? prop.length - 1 : prop.length);
             var jsType = toJsType(field);
             if (field.optional)
@@ -744,6 +769,11 @@ function exportResolvedType(type, asInterface) {
 }
 
 function buildEnum(ref, enm) {
+
+    if(enm.undefinedInMainProto)
+    {
+        return;
+    }
 
     push("");
     var comment = [
