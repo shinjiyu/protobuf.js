@@ -187,23 +187,14 @@ exports.main = function main(args, callback) {
     if (!target)
         target = require(path.resolve(process.cwd(), argv[inputArgs.TARGET]));
 
-    var _count = 0;
+    var ori_output = path.dirname(argv[inputArgs.OUT]);
 
     for(var _file of files)
     {
-        if(_count == 1)
-        {
-         //   break;
-        }
-        _count++;
-
-
         //_file 是一个路径,获得_file的文件名
-        var _file_name = _file.split("\\").pop().split('.')[0];
+        var _file_name = _file.replaceAll("/","\\").split("\\").pop().split('.')[0];
         var mainFiles = [_file_name];
-        argv[inputArgs.OUT] = `output/PB/${_file_name}.js`;
-        
-        //argv[inputArgs.OUT] = 
+        argv[inputArgs.OUT] = `${ori_output}/${_file_name}.js`;
 
 
         
