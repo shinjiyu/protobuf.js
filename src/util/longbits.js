@@ -99,13 +99,14 @@ LongBits.from = function from(value) {
         return LongBits.fromNumber(value);
     if(typeof value === "bigint")
     {
-        console.log(`[shinjiyu] using bigint ${value}`);
         return LongBits.fromBigInt(value);
     }
     if (util.isString(value)) {
         /* istanbul ignore else */
         if (util.Long)
             value = util.Long.fromString(value);
+        else if (util.BigInt)
+            value = BigInt(value);
         else
             return LongBits.fromNumber(parseInt(value, 10));
     }

@@ -181,11 +181,13 @@ util.Long = /* istanbul ignore next */ util.global.dcodeIO && /* istanbul ignore
          || /* istanbul ignore next */ util.global.Long
          || util.inquire("long");
 
+util.Long = undefined;
+
 /**
  * decide whether use bigint for int64 uint64 sint64 fixed64 sfixed64
  * @type {boolean}
  */
-util.BigInt = true;
+util.BigInt = (util.global || globalThis).BigInt !== undefined;
 
 /**
  * Regular expression used to verify 2 bit (`bool`) map keys.
