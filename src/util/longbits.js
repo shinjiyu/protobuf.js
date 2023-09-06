@@ -3,6 +3,9 @@ module.exports = LongBits;
 
 var util = require("../util/minimal");
 
+
+const view = new DataView(new ArrayBuffer(8));
+
 /**
  * Constructs new long bits.
  * @classdesc Helper class for working with the low and high bits of a 64 bit value.
@@ -73,13 +76,32 @@ LongBits.fromNumber = function fromNumber(value) {
 };
 
 /**
+ * Constructs new long bits from bigint.
+ * @param {bigint} value 
+ * @returns {util.LongBits} Instance
+ */
+LongBits.fromBigInt = function fromBigInt(value){
+    view.setBigInt64(0,value,true);
+    var lo = view.getInt32(0,true);
+    var hi = view.getInt32(4,true);
+    return new LongBits(lo, hi);
+}
+
+
+
+/**
  * Constructs new long bits from a number, long or string.
- * @param {Long|number|string} value Value
+ * @param {Long|number|bigint|string} value Value
  * @returns {util.LongBits} Instance
  */
 LongBits.from = function from(value) {
     if (typeof value === "number")
         return LongBits.fromNumber(value);
+    if(typeof value === "bigint")
+    {
+        console.log(`[shinjiyu] using bigint ${value}`);
+        return LongBits.fromBigInt(value);
+    }
     if (util.isString(value)) {
         /* istanbul ignore else */
         if (util.Long)
@@ -105,6 +127,18 @@ LongBits.prototype.toNumber = function toNumber(unsigned) {
     }
     return this.lo + this.hi * 4294967296;
 };
+
+/**
+ * Converts this long bits to bigint.
+ * @param {boolean} [unsigned=false] Whether unsigned or not
+ * @returns {bigint} Bigint
+ */
+LongBits.prototype.toBigInt = function toBigInt(unsigned)
+{
+    view.setInt32(0,this.lo,true);
+    view.setInt32(4,this.hi,true);
+    return unsigned?view.getBigUint64(0,true) :view.getBigInt64(0,true);
+}
 
 /**
  * Converts this long bits to a long.
