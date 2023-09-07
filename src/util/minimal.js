@@ -241,13 +241,16 @@ util.longToHash = function longToHash(value) {
  * Converts an 8 characters long hash string to a long or number.
  * @param {string} hash Hash
  * @param {boolean} [unsigned=false] Whether unsigned or not
- * @returns {Long|number} Original value
+ * @returns {Long|number|BigInt} Original value
  */
 util.longFromHash = function longFromHash(hash, unsigned) {
     var bits = util.LongBits.fromHash(hash);
     if (util.Long)
         return util.Long.fromBits(bits.lo, bits.hi, unsigned);
-    return bits.toNumber(Boolean(unsigned));
+    else if(util.BigInt)
+        return bits.toBigInt(unsigned);
+    else
+        return bits.toNumber(Boolean(unsigned));
 };
 
 /**
