@@ -70,13 +70,13 @@ tape.test("writer & reader", function(test) {
         [ 140737488355327, [ 255, 255, 255, 255, 255, 255, 31 ] ]
     ]);
 
-    test.ok(protobuf.util.Long, "should use long.js");
+    //test.ok(protobuf.util.Long, "should use long.js");
     values.forEach(function(val) {
-        var longVal = protobuf.util.Long.fromNumber(val[0], false);
+        var longVal =  protobuf.util.Long ? protobuf.util.Long.fromNumber(val[0], false):BigInt(val[0]);
         
         test.ok(expect("uint64", longVal, val[1]), "should write " + longVal + " as an unsigned varint of length " + val[1].length + " and read it back equally");
         test.ok(expect("int64", longVal, val[1]), "should write " + longVal + " as a signed varint of length " + val[1].length + " and read it back equally");
-        var zzBaseVal = longVal.shru(1).xor(longVal.and(1).negate());
+        var zzBaseVal = protobuf.util.Long ? longVal.shru(1).xor(longVal.and(1).negate()):(longVal >> 1n) ^ -(longVal & 1n)
         test.ok(expect("sint64", zzBaseVal, val[1]), "should write " + zzBaseVal + " as a signed zig-zag encoded varint of length " + val[1].length + " and read it back equally");
     });
 

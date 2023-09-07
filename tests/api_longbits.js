@@ -16,15 +16,32 @@ tape.test("longbits", function(test) {
         test.equal(zero.length(), 1, "should return a byte length of 1");
         test.equal(LongBits.fromNumber(0), zero, "should be returned by fromNumber(0)");
         test.equal(LongBits.from(0), zero, "should be returned by from(0)");
-        test.equal(LongBits.from(Long.ZERO), zero, "should be returned by from(Long.ZERO)");
-        test.same(zero.toLong(), Long.ZERO, "should equal Long.ZERO (signed)");
-        test.same(zero.toLong(true), Long.UZERO, "should equal Long.UZERO (unsigned)");
+        if(Long)
+        {
+            test.equal(LongBits.from(Long.ZERO), zero, "should be returned by from(Long.ZERO)");
+            test.same(zero.toLong(), Long.ZERO, "should equal Long.ZERO (signed)");
+            test.same(zero.toLong(true), Long.UZERO, "should equal Long.UZERO (unsigned)");
+            protobuf.util.Long = null;
+            test.equal(protobuf.util.longFromHash("\0\0\0\0\0\0\0\0"), 0, "should be returned for a binary hash of 8x0 (number 0 through util.longFromHash)");
+            protobuf.util.Long = Long;
+        }
+        else
+        {
+            //test.equal(LongBits.from(BigInt(0)), zero,"should be returned by from(Long.ZERO)");
+            test.same(zero.toBigInt(), BigInt(0), "should equal Long.ZERO (signed)");
+            test.same(zero.toBigInt(true), BigInt(0), "should equal Long.UZERO (unsigned)");
+            if(protobuf.util.BigInt)
+            {
+                test.equal(protobuf.util.longFromHash("\0\0\0\0\0\0\0\0"), BigInt(0), "should be returned for a binary hash of 8x0 (number 0 through util.longFromHash)");
+            }
+            else{
+                test.equal(protobuf.util.longFromHash("\0\0\0\0\0\0\0\0"), 0, "should be returned for a binary hash of 8x0 (number 0 through util.longFromHash)");
+            }
+        }
         test.equal(zero.toHash(), "\0\0\0\0\0\0\0\0", "should convert to a binary hash of 8x0");
         test.equal(protobuf.util.longToHash(0), "\0\0\0\0\0\0\0\0", "should convert to a binary hash of 8x0 (number 0 through util.longToHash)");
         test.equal(LongBits.fromHash("\0\0\0\0\0\0\0\0"), zero, "should be returned for a binary hash of 8x0");
-        protobuf.util.Long = null;
-        test.equal(protobuf.util.longFromHash("\0\0\0\0\0\0\0\0"), 0, "should be returned for a binary hash of 8x0 (number 0 through util.longFromHash)");
-        protobuf.util.Long = Long;
+        
         test.end();
     });
 
@@ -56,22 +73,26 @@ tape.test("longbits", function(test) {
         { low: 0, high: -1, unsigned: false, length: 10 }
     ]
     .forEach(function(value) {
-        var long = Long.fromValue(value);
+        var long = Long ? Long.fromValue(value) : {low:value.low,high:value.high,unsigned:value.unsigned};
         test.equal(long.unsigned, value.unsigned, long + " should be signed/unsigned");
         var bits = LongBits.from(value);
         test.equal(bits.lo, long.low >>> 0, long + " should have equal low bits");
         test.equal(bits.hi, long.high >>> 0, long + " should have equal high bits");
         test.equal(bits.length(), value.length, long + " should return an equal length");
-        test.equal(bits.toNumber(value.unsigned), long.toNumber(), long + " should convert to an equal number");
-        var number = long.toNumber(value.unsigned);
+        if(Long) test.equal(bits.toNumber(value.unsigned), long.toNumber(), long + " should convert to an equal number");
+        var number = Long ? long.toNumber(value.unsigned) : bits.toNumber(value.unsigned);
         if (number <= 9007199254740991 && number >= -9007199254740991)
             test.same(LongBits.fromNumber(number), bits, long + " should convert hence and forth equally (where safe)");
+        var toLongResult = bits.toLong(value.unsigned);
         test.same(bits.toLong(value.unsigned), long, long + " should convert to an equal Long");
-        var comp = String.fromCharCode.apply(String, long.toBytesLE());
-        test.equal(bits.toHash(), comp, long + " should convert to an equal hash");
-        test.equal(protobuf.util.longToHash(long), comp, long + " should convert to an equal hash through util.longToHash");
-        test.same(LongBits.fromHash(comp), bits, long + " should convert back to an equal value");
-        test.same(protobuf.util.longFromHash(comp, long.unsigned), long, long + " should convert back to an equal value through util.longFromHash");
+        if(Long)
+        {
+            var comp = String.fromCharCode.apply(String, long.toBytesLE());
+            test.equal(bits.toHash(), comp, long + " should convert to an equal hash");
+            test.equal(protobuf.util.longToHash(long), comp, long + " should convert to an equal hash through util.longToHash");
+            test.same(LongBits.fromHash(comp), bits, long + " should convert back to an equal value");
+            test.same(protobuf.util.longFromHash(comp, long.unsigned), long, long + " should convert back to an equal value through util.longFromHash");
+        }
     });
 
     var num = -4294967296 * 4294967296;

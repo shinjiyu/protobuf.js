@@ -15,12 +15,12 @@ tape.test("converters", function(test) {
             test.plan(6);
 
             test.test(test.name + " - called with defaults = true", function(test) {
-                var obj = Message.toObject(Message.create(), { defaults: true });
+                var obj = Message.toObject(Message.create(), { defaults: true});
 
                 test.equal(obj.stringVal, "", "should set stringVal");
                 test.same(obj.stringRepeated, [], "should set stringRepeated");
 
-                test.same(obj.uint64Val, { low: 0, high: 0, unsigned: true }, "should set uint64Val");
+                test.same(obj.uint64Val, BigInt(0), "should set uint64Val");
                 test.same(obj.uint64Repeated, [], "should set uint64Repeated");
 
                 test.same(obj.bytesVal, protobuf.util.newBuffer(0), "should set bytesVal");
@@ -98,15 +98,15 @@ tape.test("converters", function(test) {
                 var buf = protobuf.util.newBuffer(3);
                 buf[0] = buf[1] = buf[2] = 49; // "111"
                 var msg = Message.create({
-                    uint64Val: protobuf.util.Long.fromNumber(1),
+                    uint64Val: BigInt(1),
                     uint64Repeated: [2, 3],
                     bytesVal: buf,
                     bytesRepeated: [buf, buf],
                     enumVal: 2,
                     enumRepeated: [1, 100, 2],
                     int64Map: {
-                        a: protobuf.util.Long.fromNumber(2),
-                        b: protobuf.util.Long.fromNumber(3)
+                        a: BigInt(2),
+                        b: BigInt(3)
                     }
                 });
 
@@ -172,13 +172,13 @@ tape.test("converters", function(test) {
             var buf = protobuf.util.newBuffer(3);
             buf[0] = buf[1] = buf[2] = 49; // "111"
 
-            test.same(msg.uint64Val, { low: 1, high: 0, unsigned: true }, "should set uint64Val from a number");
-            test.same(msg.uint64Repeated, [ { low: 1, high: 0, unsigned: true}, { low: 2, high: 0, unsigned: true } ], "should set uint64Repeated from a number and a string");
+            test.same(msg.uint64Val, BigInt(1), "should set uint64Val from a number");
+            test.same(msg.uint64Repeated, [ BigInt(1), BigInt(2) ], "should set uint64Repeated from a number and a string");
             test.same(msg.bytesVal, buf, "should set bytesVal from a base64 string");
             test.same(msg.bytesRepeated, [ buf, buf ], "should set bytesRepeated from a base64 string and a plain array");
             test.equal(msg.enumVal, 1, "should set enumVal from a string");
             test.same(msg.enumRepeated, [ 2, 2, 100 ], "should set enumRepeated from a number and a string and preserve unknown value");
-            test.same(msg.int64Map, { a: { low: 2, high: 0, unsigned: false }, b: { low: 3, high: 0, unsigned: false } }, "should set int64Map from a number and a string");
+            test.same(msg.int64Map, { a: BigInt(2), b: BigInt(3) }, "should set int64Map from a number and a string");
 
             test.end();
         });
