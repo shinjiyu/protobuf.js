@@ -360,7 +360,7 @@ function toJsType(field) {
         case "sint64":
         case "fixed64":
         case "sfixed64":
-            type = config.forceLong ? "Long" : config.forceNumber ? "number" : "number|Long";
+            type = config.forceLong ? "Long" : config.forceNumber ?  "number" : config.forceBigint ? "bigint" : "bigint|number|Long";
             break;
         case "bool":
             type = "boolean";

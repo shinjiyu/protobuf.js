@@ -24,6 +24,7 @@ exports.ALT_COMMENT = "alt-comment";
 exports.FORCE_LONG = "force-long";
 exports.STRICT_LONG = "strict-long";
 exports.FORCE_NUMBER = "force-number";
+exports.FORCE_BIGINT = "force-bigint";
 exports.FORCE_ENUM_STRING = "force-enum-string";
 exports.FORCE_MESSAGE = "force-message";
 exports.NULL_DEFAULTS = "null-defaults";

@@ -47,7 +47,7 @@ exports.main = function main(args, callback) {
         boolean: [ inputArgs.CREATE, inputArgs.ENCODE, inputArgs.DECODE, inputArgs.VERIFY, inputArgs.CONVERT,
             inputArgs.DELIMITED, inputArgs.TYPEURL, inputArgs.BEAUTIFY, 
             inputArgs.COMMENTS, inputArgs.SERVICE, inputArgs.ES6, inputArgs.SPARSE, inputArgs.KEEP_CASE,
-            inputArgs.ALT_COMMENT, inputArgs.FORCE_LONG, inputArgs.FORCE_NUMBER, 
+            inputArgs.ALT_COMMENT, inputArgs.FORCE_LONG, inputArgs.FORCE_NUMBER, inputArgs.FORCE_BIGINT,
             inputArgs.FORCE_ENUM_STRING, inputArgs.FORCE_MESSAGE, inputArgs.NULL_DEFAULTS, inputArgs.UNIFY_NAMES,
              inputArgs.USE_IMPORTS],
         default: {
@@ -68,6 +68,7 @@ exports.main = function main(args, callback) {
             [inputArgs.ALT_COMMENT]: false,
             [inputArgs.FORCE_LONG]: false,
             [inputArgs.FORCE_NUMBER]: false,
+            [inputArgs.FORCE_BIGINT]: false,
             [inputArgs.FORCE_ENUM_STRING]: false,
             [inputArgs.FORCE_MESSAGE]: false,
             [inputArgs.NULL_DEFAULTS]: false,
@@ -160,6 +161,7 @@ exports.main = function main(args, callback) {
                 "",
                 "  --" + inputArgs.FORCE_LONG + "     Enforces the use of 'Long' for s-/u-/int64 and s-/fixed64 fields.",
                 "  --" + inputArgs.FORCE_NUMBER + "   Enforces the use of 'number' for s-/u-/int64 and s-/fixed64 fields.",
+                "  --" + inputArgs.FORCE_BIGINT + "   Enforces the use of 'bigint' for s-/u-/int64 and s-/fixed64 fields.",
                 "  --" + inputArgs.FORCE_MESSAGE + "  Enforces the use of message instances instead of plain objects.",
                 "",
                 "  --" + inputArgs.NULL_DEFAULTS + "  Default value for optional fields is null instead of zero value.",
@@ -462,7 +464,7 @@ exports.main = function main(args, callback) {
             }
             try {
                 if (argv[inputArgs.OUT])
-                    fs.writeFileSync(argv[inputArgs.OUT], output, { encoding: "utf8" });
+                    fs.writeFileSync(argv[inputArgs.OUT], output, { encoding: "utf-8" });
                 else if (!callback)
                     process.stdout.write(output, "utf8");
                 return callback
