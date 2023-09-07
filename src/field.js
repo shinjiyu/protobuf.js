@@ -159,6 +159,12 @@ function Field(name, id, type, rule, extend, options, comment) {
      */
     this.long = util.Long ? types.long[type] !== undefined : /* istanbul ignore next */ false;
 
+     /**
+     * Whether this field's value should be treated as a bigint.
+     * @type {boolean}
+     */
+    this.bigint = util.BigInt ? types.long[type] !== undefined : /* istanbul ignore next */ false;
+
     /**
      * Whether this field's value is a buffer.
      * @type {boolean}
@@ -297,8 +303,11 @@ Field.prototype.resolve = function resolve() {
         /* istanbul ignore else */
         if (Object.freeze)
             Object.freeze(this.typeDefault); // long instances are meant to be immutable anyway (i.e. use small int cache that even requires it)
-
-    } else if (this.bytes && typeof this.typeDefault === "string") {
+    }
+    else if (this.bigint) {
+        this.typeDefault = BigInt(this.typeDefault);
+    }
+    else if (this.bytes && typeof this.typeDefault === "string") {
         var buf;
         if (util.base64.test(this.typeDefault))
             util.base64.decode(this.typeDefault, buf = util.newBuffer(util.base64.length(this.typeDefault)), 0);

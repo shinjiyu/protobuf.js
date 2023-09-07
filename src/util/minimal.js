@@ -72,6 +72,14 @@ util.isInteger = Number.isInteger || /* istanbul ignore next */ function isInteg
 };
 
 /**
+ * we should test the bound of the value later.
+ * @param {*} value 
+ * @returns 
+ */
+util.isBigInt = function isBigInt(value){
+    return typeof value === "bigint";
+}
+/**
  * Tests if the specified value is a string.
  * @param {*} value Value to test
  * @returns {boolean} `true` if the value is a string
@@ -187,7 +195,15 @@ util.Long = undefined;
  * decide whether use bigint for int64 uint64 sint64 fixed64 sfixed64
  * @type {boolean}
  */
-util.BigInt = (util.global || globalThis).BigInt !== undefined;
+util.BigInt = (util.global || globalThis).BigInt;
+
+if(util.BigInt && !util.BigInt.prototype.toJSON)
+{
+    util.BigInt.prototype.toJSON = function()
+    {
+        return this.toString();
+    }
+}
 
 /**
  * Regular expression used to verify 2 bit (`bool`) map keys.

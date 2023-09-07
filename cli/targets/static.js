@@ -454,6 +454,10 @@ function buildType(ref, type) {
                     + JSON.stringify(field.typeDefault.high) + ","
                     + JSON.stringify(field.typeDefault.unsigned)
                 + ") : " + field.typeDefault.toNumber(field.type.charAt(0) === "u") + ";");
+        else if(field.bigint)
+        {
+            push(escapeName(type.name) + ".prototype" + prop + " = BigInt(" + JSON.stringify(field.typeDefault) + ");");
+        }
         else if (field.bytes) {
             push(escapeName(type.name) + ".prototype" + prop + " = $util.newBuffer(" + JSON.stringify(Array.prototype.slice.call(field.typeDefault)) + ");");
         } else

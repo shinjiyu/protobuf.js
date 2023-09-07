@@ -256,6 +256,8 @@ converter.toObject = function toObject(mtype) {
             ("d%s=o.longs===String?n.toString():o.longs===Number?n.toNumber():n", prop)
         ("}else")
             ("d%s=o.longs===String?%j:%i", prop, field.typeDefault.toString(), field.typeDefault.toNumber());
+            else if (field.bigint) gen
+        ("d%s=BigInt(%s)", prop, field.typeDefault.toString())
             else if (field.bytes) {
                 var arrayDefault = "[" + Array.prototype.slice.call(field.typeDefault).join(",") + "]";
                 gen
