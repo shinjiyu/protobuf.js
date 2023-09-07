@@ -106,7 +106,7 @@ LongBits.from = function from(value) {
         if (util.Long)
             value = util.Long.fromString(value);
         else if (util.BigInt)
-            value = BigInt(value);
+            return LongBits.fromBigInt(BigInt(value));
         else
             return LongBits.fromNumber(parseInt(value, 10));
     }
